@@ -4,6 +4,9 @@ A one-page web app that lets a non-technical person — built for elderly parent
 
 No app store, no account, no chat history. A password-protected link on the home screen.
 
+**Just want the prompt?** → [`PROMPT.md`](PROMPT.md) — paste it into ChatGPT, Claude or Gemini and you have most of the benefit in five minutes.
+**Want the page for someone?** → [`DEPLOY.md`](DEPLOY.md) — three levels, from "no code" to "an AI agent does it for you".
+
 **Live example (private):** the author runs one for their family. This repo is the template.
 
 ---
@@ -95,6 +98,8 @@ Same question, same prompt, same allow-list:
 | DeepSeek V4.1 Flash via OpenRouter + Exa | ~25 s | 6, PubMed/PMC only | **no** — Exa returned ~4k tokens of abstracts vs ~47k tokens of page content | ≈ $0.01 |
 
 Opus is the default because the missing paragraph in the cheap run was the one that mattered. Full answers are in `spec/compare/`. Cost is dominated by the ~50k input tokens of fetched pages, not by output.
+
+**Rule of thumb: match the model to the stakes.** The more the answer matters — a symptom, a medicine, a decision about treatment — the more capable the model should be. Saving 25p on a question about a blood thinner is the wrong trade. This applies doubly if you use the prompt in an ordinary chatbot (`PROMPT.md`), where nothing enforces the source list.
 
 ## Deploy your own
 

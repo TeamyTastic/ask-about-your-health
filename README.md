@@ -96,8 +96,23 @@ Same question, same prompt, same allow-list:
 | Claude Opus 5 + Anthropic search | ~30 s | 7–10 incl. NHS, NICE, MHRA | yes | ≈ $0.35 |
 | Claude Sonnet 5 + Anthropic search | ~20 s | 3 incl. NHS Wales | yes | ≈ $0.14 |
 | DeepSeek V4.1 Flash via OpenRouter + Exa | ~25 s | 6, PubMed/PMC only | **no** — Exa returned ~4k tokens of abstracts vs ~47k tokens of page content | ≈ $0.01 |
+| GPT-5.5 via OpenRouter ZDR + OpenAI search | ~80 s | 5 incl. NICE, Cochrane, NHS | yes | ≈ $0.33 |
 
 Opus is the default because the missing paragraph in the cheap run was the one that mattered. Full answers are in `spec/compare/`. Cost is dominated by the ~50k input tokens of fetched pages, not by output.
+
+### Zero data retention (ZDR) — the privacy-first alternative
+
+*ZDR* means the provider deletes your prompt and the answer as soon as it has replied — nothing logged, nothing kept to train on. The default route (Anthropic direct) is **not** ZDR: Anthropic keeps API traffic for ~30 days (not used for training). Through [OpenRouter](https://openrouter.ai) you can force ZDR routing (`"provider": {"zdr": true}`), and the page supports that as a second provider: set `PROVIDER = "openrouter"`, store an `OPENROUTER_API_KEY` variable at here.now, and the `/api/ask-or` route is already in `proxy.json`. What we measured:
+
+| Route | ZDR | Retrieval | Found the liver / blood-thinner warnings | Time | Cost |
+|---|---|---|---|---|---|
+| Opus 5, Anthropic direct (default) | no | Anthropic search: NHS, NICE, MHRA | yes | ~30 s | ≈ $0.35 |
+| Opus 5 via OpenRouter ZDR | — | not possible: its ZDR endpoints (Bedrock, Vertex) have no native search | — | — | — |
+| DeepSeek V4.1 Flash via OpenRouter ZDR + Exa search | model only — Exa is a third party | PubMed abstracts only (~4k tokens) | **no** | ~25 s | ≈ $0.01 |
+| **GPT-5.5 via OpenRouter ZDR (Azure), OpenAI's own search** | **yes, including the search** | NICE, Cochrane, NHS | yes | ~80–90 s | ≈ $0.33 |
+| same, reasoning effort "low" | yes | 4 sources | thinner | ~40 s | ≈ $0.14 |
+
+The honest trade is **privacy versus waiting time**: GPT-5.5 on a ZDR endpoint matched Opus on the content that matters, at the same cost, but takes roughly three times as long — and for an older user, 80 seconds looking at "Looking up…" is a real cost. Two practical notes if you choose it: OpenAI's domain filter takes bare domains only (the path-scoped MHRA and legacy-PMC entries are dropped automatically), and an OpenRouter account with ZDR enforced in its privacy settings refuses any non-ZDR route — which is a feature.
 
 **Rule of thumb: match the model to the stakes.** The more the answer matters — a symptom, a medicine, a decision about treatment — the more capable the model should be. Saving 25p on a question about a blood thinner is the wrong trade. This applies doubly if you use the prompt in an ordinary chatbot (`PROMPT.md`), where nothing enforces the source list.
 

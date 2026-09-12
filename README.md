@@ -99,6 +99,8 @@ Same question, same prompt, same allow-list:
 
 Opus is the default because the missing paragraph in the cheap run was the one that mattered. Full answers are in `spec/compare/`. Cost is dominated by the ~50k input tokens of fetched pages, not by output.
 
+**Why not Google Gemini?** Gemini is a strong search model and its paid tier includes 5,000 grounded searches a month, but Google Search grounding has **no domain restriction** — it searches the whole web, so the enforced allow-list this design rests on would become a polite request in the prompt. The free tier also has no search and its content is "used to improve our products". A reasonable budget choice for someone who accepts an unfenced search; not what this page is for.
+
 **Rule of thumb: match the model to the stakes.** The more the answer matters — a symptom, a medicine, a decision about treatment — the more capable the model should be. Saving 25p on a question about a blood thinner is the wrong trade. This applies doubly if you use the prompt in an ordinary chatbot (`PROMPT.md`), where nothing enforces the source list.
 
 ## Where the data goes — Anthropic's terms, in plain words

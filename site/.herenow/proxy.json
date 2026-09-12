@@ -1,0 +1,13 @@
+{
+  "proxies": {
+    "/api/ask": {
+      "upstream": "https://api.anthropic.com/v1/messages",
+      "method": "POST",
+      "headers": {
+        "x-api-key": "${ANTHROPIC_API_KEY}",
+        "anthropic-version": "2023-06-01"
+      },
+      "rateLimit": "20/hour/ip"
+    }
+  }
+}

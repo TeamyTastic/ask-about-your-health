@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ask About Your Health</title>
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap">
+<style>
+  :root {
+    --ground:#f3f6f4; --sheet:#ffffff; --ink:#1b2731; --ink-2:#4f5d66; --line:#cdd6d1; --tint:#e4efec;
+    --accent:#0f5e5a; --accent-ink:#ffffff; --focus:#1f8f88;
+    --urgent:#b3261e; --urgent-bg:#fbe9e7; --amber:#7a5200; --amber-bg:#fff2d3;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --ground:#131a1d; --sheet:#1b2429; --ink:#e9eeec; --ink-2:#a9b4b9; --line:#2f3c42; --tint:#1e302e;
+    --accent:#7fd1c8; --accent-ink:#0b1b19; --focus:#9be3db;
+    --urgent:#ff9a90; --urgent-bg:#3b1d1a; --amber:#ffd07a; --amber-bg:#3a2c10;
+  } }
+  :root[data-theme="dark"] {
+    --ground:#131a1d; --sheet:#1b2429; --ink:#e9eeec; --ink-2:#a9b4b9; --line:#2f3c42; --tint:#1e302e;
+    --accent:#7fd1c8; --accent-ink:#0b1b19; --focus:#9be3db;
+    --urgent:#ff9a90; --urgent-bg:#3b1d1a; --amber:#ffd07a; --amber-bg:#3a2c10;
+  }
+  * { box-sizing:border-box; }
+  html { font-size:21px; }
+  body { margin:0; background:var(--ground); color:var(--ink); font-family:"Atkinson Hyperlegible",-apple-system,"Helvetica Neue",Arial,sans-serif; line-height:1.55; padding-block:0 64px; padding-inline:18px; }
+  main { max-width:44rem; margin:0 auto; }
+  h1,h2,h3 { font-family:"Fraunces",Georgia,"Times New Roman",serif; font-weight:600; line-height:1.15; text-wrap:balance; margin:0; }
+  h1 { font-size:2rem; margin-top:.5rem; }
+  @media (max-width:640px) { h1 { font-size:1.75rem; } }
+  h2 { font-size:1.35rem; margin-top:2.4rem; margin-bottom:.6rem; }
+  h3 { font-size:1.05rem; margin-top:1.4rem; margin-bottom:.3rem; }
+  p { margin:0 0 .8rem; }
+  .eyebrow { font-size:.78rem; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); margin-top:1rem; font-weight:700; }
+  .lede { color:var(--ink-2); margin:.5rem 0 1rem; max-width:36rem; }
+  label { display:block; font-weight:700; margin-bottom:.4rem; }
+  textarea { width:100%; font:inherit; font-size:1.1rem; padding:.7rem .9rem; border:2px solid var(--line); border-radius:8px; min-height:4rem; background:var(--sheet); color:var(--ink); resize:vertical; }
+  textarea:focus, button:focus-visible, a:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
+  button { font:inherit; cursor:pointer; border-radius:8px; }
+  .go { display:block; width:100%; margin-top:.7rem; padding:.9rem; font-size:1.15rem; font-weight:700; color:var(--accent-ink); background:var(--accent); border:0; }
+  .go[disabled] { opacity:.6; cursor:wait; }
+  .status { display:none; margin-top:1rem; padding:.8rem 1rem; background:var(--tint); border-left:4px solid var(--accent); font-size:.95rem; }
+  .status ul { margin:.4rem 0 0; padding-left:1.2rem; color:var(--ink-2); }
+  /* the answer is a sheet: the thing they will print and take to the surgery */
+  .sheet { display:none; margin-top:1.6rem; background:var(--sheet); border-top:4px solid var(--accent); border-bottom:1px solid var(--line); padding:1.2rem 1.2rem 1.4rem; }
+  .sheet h2 { font-size:1.15rem; margin-top:1.4rem; }
+  .sheet h2:first-of-type { margin-top:.6rem; }
+  .qecho { color:var(--ink-2); font-size:.95rem; }
+  .banner { padding:.9rem 1rem; font-weight:700; font-size:1.1rem; margin:.6rem 0 1rem; border-left:6px solid; }
+  #alert .banner { margin:1rem 0 0; font-size:1.25rem; }
+  .b999 { background:var(--urgent-bg); color:var(--urgent); border-color:var(--urgent); }
+  .b111 { background:var(--amber-bg); color:var(--amber); border-color:var(--amber); }
+  .sheet ul { padding-left:1.2rem; } .sheet li { margin-bottom:.35rem; }
+  .sources ol { padding-left:1.4rem; } .sources li { margin-bottom:.5rem; font-size:.95rem; overflow-wrap:anywhere; }
+  .sources small { display:block; color:var(--ink-2); font-size:.8rem; }
+  .caveat { font-size:.92rem; color:var(--ink-2); border-top:1px solid var(--line); padding-top:.8rem; margin-top:1.2rem; }
+  .actions { display:flex; flex-wrap:wrap; gap:.6rem; margin-top:1rem; }
+  .actions button { flex:1 1 11rem; padding:.7rem .8rem; background:var(--sheet); border:2px solid var(--accent); color:var(--accent); font-weight:700; font-size:.98rem; }
+  .actions button.primary { background:var(--accent); color:var(--accent-ink); }
+  .actions button svg { vertical-align:-3px; margin-right:.2rem; }
+  .err { color:var(--urgent); }
+  a { color:var(--accent); text-underline-offset:.15em; }
+  /* about */
+  .about { margin-top:2.4rem; border-top:1px solid var(--line); padding-top:.2rem; font-size:.98rem; max-width:40rem; }
+  .about > h2:first-child { margin-top:1.4rem; }
+  .srcgroups { display:grid; grid-template-columns:repeat(auto-fit,minmax(12rem,1fr)); gap:1rem 1.4rem; margin:.4rem 0 .6rem; }
+  .srcgroups ul { margin:0; padding-left:1.1rem; } .srcgroups li { margin-bottom:.25rem; }
+  .srcgroups small { color:var(--ink-2); }
+  .stats { display:grid; grid-template-columns:repeat(5,1fr); gap:.8rem; margin:.8rem 0 .4rem; }
+  @media (max-width:640px) { .stats { grid-template-columns:1fr; gap:.5rem; } .stat b { display:inline; margin-right:.5rem; font-size:1.4rem; } }
+  .stat { border-left:3px solid var(--accent); padding:.2rem 0 .2rem .7rem; }
+  .stat b { display:block; font-family:"Fraunces",Georgia,serif; font-size:1.7rem; font-weight:600; line-height:1.1; font-variant-numeric:tabular-nums; }
+  .stat span { font-size:.85rem; color:var(--ink-2); }
+  .attrib { font-size:.85rem; color:var(--ink-2); }
+  table { border-collapse:collapse; width:100%; font-size:.92rem; margin:.4rem 0 .8rem; }
+  th,td { text-align:left; vertical-align:top; padding:.45rem .5rem .45rem 0; border-bottom:1px solid var(--line); }
+  th { font-weight:700; color:var(--ink-2); font-size:.8rem; letter-spacing:.06em; text-transform:uppercase; }
+  .tablewrap { overflow-x:auto; }
+  .about ul { padding-left:1.2rem; } .about li { margin-bottom:.45rem; }
+  .saved { margin-top:2.6rem; }
+  .savedItem { border-top:1px solid var(--line); padding:.6rem 0; }
+  .savedItem summary { cursor:pointer; font-size:1rem; } .savedItem summary::marker { color:var(--accent); }
+  .savedItem h2 { font-size:1rem; margin-top:1rem; } .savedItem h3 { font-size:.9rem; }
+  .savedItem ul { padding-left:1.2rem; font-size:.85rem; overflow-wrap:anywhere; }
+  .remove { background:none; border:1px solid var(--line); color:var(--ink-2); font-size:.85rem; padding:.3rem .6rem; }
+  .feedback { margin-top:2rem; border-top:1px solid var(--line); padding-top:.2rem; max-width:40rem; }
+  .feedback h2 { margin-top:1.4rem; }
+  .feedback label { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+  .feedback textarea { min-height:4rem; font-size:1rem; }
+  .fbsend { display:inline-block; width:auto; margin-top:.6rem; padding:.6rem 1.2rem; font-size:1rem; background:var(--sheet); color:var(--accent); border:2px solid var(--accent); }
+  .fbsend[disabled] { opacity:.7; }
+  .flow { list-style:none; margin:.6rem 0 .4rem; padding:0; counter-reset:step; }
+  .flow li { position:relative; padding:.45rem 0 .55rem 2.6rem; counter-increment:step; }
+  .flow li::before { content:counter(step); position:absolute; left:0; top:.45rem; width:1.7rem; height:1.7rem; border-radius:50%; background:var(--accent); color:var(--accent-ink); font-weight:700; font-size:.9rem; display:flex; align-items:center; justify-content:center; }
+  .flow li:not(:last-child)::after { content:""; position:absolute; left:.8rem; top:2.3rem; bottom:-.2rem; border-left:2px solid var(--line); }
+  .flow b { display:block; } .flow span { color:var(--ink-2); font-size:.92rem; }
+  .printhead { display:none; }
+  @media print {
+    body { padding:0; background:#fff; color:#000; font-size:12pt; }
+    .ask, .about, .actions, .status, .saved, .feedback { display:none !important; }
+    .sheet { display:block !important; border:0; padding:0; background:#fff; color:#000; }
+    .printhead { display:block; font-size:10.5pt; border-bottom:1px solid #000; padding-bottom:6px; margin-bottom:10px; }
+    a { color:#000; }
+    .sources small, #alert { display:none; }
+  }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior:smooth; } }
+</style>
+</head>
+<body>
+<main>
+  <div id="alert" role="alert"></div>
+  <section class="ask">
+    <p class="eyebrow">Trusted UK sources only</p>
+    <h1>Ask about your health</h1>
+    <p class="lede">Type a question in your own words. Answers come only from NHS, NICE, Cochrane, PubMed and official UK medicine leaflets — never adverts, blogs or forums.</p>
+    <label for="q">Your question</label>
+    <textarea id="q" placeholder="For example: Is turmeric any good for my arthritis?"></textarea>
+    <button class="go" id="go" type="button">Find out</button>
+    <p class="attrib" style="margin-top:.6rem">Not a diagnosis — it is there to help you have a better conversation with your GP or pharmacist.</p>
+    <div class="status" id="status" role="status"><strong>Reading the medical sources… this usually takes about a minute.</strong><ul id="searches"></ul></div>
+  </section>
+
+  <section class="sheet" id="answer" aria-live="polite">
+    <div class="printhead">Name: ______________________ &nbsp; Date: ____________ &nbsp; AI-written summary from NHS / NICE / Cochrane / PubMed pages — not clinically checked. Please review with me.</div>
+    <p class="qecho" id="qecho"></p>
+    <div id="banner"></div>
+    <div id="body"></div>
+    <div class="sources" id="sources"></div>
+    <p class="caveat"><strong>Please check this with your GP or pharmacist before acting on it.</strong> A computer wrote it from the pages listed above. It can still be wrong.</p>
+    <div class="actions">
+      <button type="button" id="print" class="primary">Print for the doctor</button>
+      <button type="button" id="copy"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg> Copy</button>
+      <button type="button" id="share"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v13M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></svg> Share</button>
+      <button type="button" id="save">Save this answer</button>
+    </div>
+  </section>
+
+  <section class="saved" id="savedwrap" hidden>
+    <h2>Saved answers</h2>
+    <p class="attrib">Saved on this device only. Nothing is sent anywhere; nobody else can see them. Tap to reread, Remove to delete.</p>
+    <div id="savedlist"></div>
+  </section>
+
+  <section class="about" id="about">
+    <h2>Where the answers come from</h2>
+    <p>The computer may only read these websites. If they don't answer the question, it says so. Every link in an answer is a page it actually opened — it cannot invent a reference.</p>
+    <div class="srcgroups">
+      <div><h3>NHS and national guidance</h3><ul>
+        <li>NHS <small>nhs.uk</small></li><li>NHS inform Scotland <small>nhsinform.scot</small></li><li>NHS 111 online <small>111.nhs.uk</small></li>
+        <li>NICE guidelines and summaries <small>nice.org.uk</small></li><li>SIGN — Scottish guidelines <small>sign.ac.uk</small></li></ul></div>
+      <div><h3>Medicines</h3><ul>
+        <li>eMC — official UK patient leaflets <small>medicines.org.uk</small></li><li>British National Formulary <small>bnf.nice.org.uk</small></li><li>MHRA Drug Safety Update <small>gov.uk</small></li></ul></div>
+      <div><h3>Research</h3><ul>
+        <li>Cochrane reviews <small>cochranelibrary.com, cochrane.org</small></li><li>PubMed and PubMed Central <small>pubmed.ncbi.nlm.nih.gov, pmc.ncbi.nlm.nih.gov, ncbi.nlm.nih.gov/pmc</small></li></ul></div>
+    </div>
+
+    <h2>Why it works this way</h2>
+    <p>In 2026 Dr Nick Tiller and colleagues put 250 health questions to five popular chatbots and had experts mark the answers (<em>BMJ Open</em>, <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC13158598/" target="_blank" rel="noopener">read the paper</a>; discussed on <a href="https://shows.acast.com/realscienceofsport/episodes/can-you-trust-ai-for-health-and-training-advice" target="_blank" rel="noopener">The Real Science of Sport Podcast</a>, May 2026).</p>
+    <div class="stats">
+      <div class="stat"><b>50%</b><span>of answers were problematic</span></div>
+      <div class="stat"><b>1 in 5</b><span>could have caused physical harm</span></div>
+      <div class="stat"><b>30%</b><span>credible on nutrition questions</span></div>
+      <div class="stat"><b>&lt;1%</b><span>declined to answer (2 of 250)</span></div>
+      <div class="stat"><b>3 in 10</b><span>problematic on cancer and vaccines — the chatbots' best subjects</span></div>
+    </div>
+    <p>Chatbots are built to sound fluent and to please. The audit found four ways that goes wrong; each part of this page blocks one:</p>
+    <ul>
+      <li><strong>Making things up.</strong> <em>Here:</em> it must search every time, and only the sites above.</li>
+      <li><strong>“Frankenstein references”</strong> — real authors and journals stitched into papers that don't exist. No chatbot produced a fully accurate reference list for any question. <em>Here:</em> the sources are the pages it opened, not a list it wrote.</li>
+      <li><strong>Telling you what you want to hear.</strong> Only 2 of 250 answers declined. <em>Here:</em> it must say “the evidence is unclear”, leave a section empty rather than pad it, and always give the harms with the benefits.</li>
+      <li><strong>Advertising in the training data.</strong> One chatbot repeated a tape maker's marketing word for word. <em>Here:</em> those sites aren't on the list.</li>
+    </ul>
+    <h3>What the researchers recommend, and what this page does</h3>
+    <div class="tablewrap"><table>
+      <tr><th>They recommend</th><th>This page</th></tr>
+      <tr><td>Ask for benefits <em>and</em> risks</td><td>Every answer must cover harms and disproven claims</td></tr>
+      <tr><td>Tell the AI who you are</td><td>It writes for an older adult in the UK</td></tr>
+      <tr><td>Check every reference yourself</td><td>Every reference is a real page you can tap</td></tr>
+      <tr><td>Treat total confidence as a warning sign</td><td>It must say when evidence is unclear or sources disagree</td></tr>
+      <tr><td>Use AI only when a wrong answer is low-risk</td><td>No doses, never “stop a medicine”, anything you take or mix goes to a pharmacist, emergencies go to 999 or 111</td></tr>
+      <tr><td>Compare three or four chatbots</td><td>Not done — chatbots reading the same NHS pages agree whether or not they're right. Checkable pages replace that safeguard.</td></tr>
+    </table></div>
+
+    <div id="notebook" hidden><h3>Question the research yourself</h3>
+    <p><a id="notebooklink" href="#" target="_blank" rel="noopener">Open the research notebook</a> (Google NotebookLM — needs a Google account).</p></div>
+
+    <h3>What happens to what you type</h3>
+    <ol class="flow">
+      <li><b>You type a question</b><span>on this page</span></li>
+      <li><b>Anthropic's AI reads it</b><span>and searches only the sites listed above</span></li>
+      <li><b>The answer comes back to you</b><span>with links to the pages it read</span></li>
+      <li><b>Then it is forgotten</b><span>unless you press “Save this answer” — that keeps it on this device only, and you can delete it</span></li>
+    </ol>
+    <p class="attrib"><strong>Your health questions are never seen by the person who runs this page</strong> — not the questions, not the answers. The only thing they can read is what you type into the “Tell me what to improve” box at the bottom, which is about the page itself. Saved answers stay on the device you saved them on — nothing is sent anywhere, and nobody else can see them. No account, no advertising, nothing sold.</p>
+  </section>
+
+  <section class="feedback" id="feedback">
+    <h2>Tell me what to improve</h2>
+    <p class="attrib">About the page itself — an answer that confused you, a button that didn't work. This box is the only thing the person who runs the page can read; your health questions never reach them.</p>
+    <label for="fb">Your feedback</label>
+    <textarea id="fb" placeholder="Type here…"></textarea>
+    <button type="button" class="go fbsend" id="fbsend">Send feedback</button>
+    <p class="attrib" id="fbnote"></p>
+  </section>
+</main>
+
+<script>
+// ---- configure these for your own deployment ----
+const CONTACT_EMAIL = "you@example.com";          // shown under the feedback box; leave "" to hide the line
+const RESEARCH_NOTEBOOK_URL = "";                  // optional: a NotebookLM (or any) link to the research behind the page
+const MODEL = "claude-opus-5";                     // see README: Opus 5 kept the guideline-level sources in testing
+const ALLOWED_DOMAINS = [
+  "nhs.uk", "nhsinform.scot", "111.nhs.uk",
+  "nice.org.uk", "cks.nice.org.uk", "bnf.nice.org.uk", "sign.ac.uk",
+  "medicines.org.uk", "gov.uk/drug-safety-update",
+  "cochranelibrary.com", "cochrane.org",
+  "pubmed.ncbi.nlm.nih.gov", "pmc.ncbi.nlm.nih.gov", "ncbi.nlm.nih.gov/pmc"
+];
+
+const SYSTEM = `You are a careful medical research assistant writing for an older adult in the UK who has no science training.
+You have web search restricted to trusted UK and academic medical sites. Use it on every question. Never answer from memory.
+
+URGENCY — check this first, before anything else.
+If the question describes any of: chest pain or pressure; sudden breathlessness; signs of a stroke even if they have passed (face drooping, arm weakness, slurred speech, sudden confusion, sudden loss of vision); a fall with a head injury; heavy bleeding; a sudden severe headache; fits; signs of a severe allergic reaction; signs of sepsis (very high or low temperature with confusion, mottled skin, not passing urine) —
+your ENTIRE reply is the single line:  URGENT-999
+If the question describes something that needs medical advice today but is not an emergency — black or tarry stools, blood in urine or when coughing, unexplained weight loss, a new lump, new memory change, a wound that is spreading or hot, a medicine side effect that is getting worse, a fall without head injury —
+your reply STARTS with the single line  URGENT-111  and then continues with the normal answer.
+Otherwise, do not print any URGENT line.
+
+ANYTHING TAKEN, MIXED OR STOPPED
+If the question is about taking, combining, dosing, or stopping ANYTHING — prescription medicines, over-the-counter medicines, supplements, herbal remedies, vitamins — you may explain what the sources say, but you must NOT conclude that it is safe for this person. Older people are often on several medicines and only a pharmacist can check against the real list. Say in the short answer that a pharmacist can check this for free (any community pharmacy or an NHS medicines review), and make that one of the questions to ask.
+
+SOURCES
+Cite only what you actually retrieved. If you find nothing useful on the allowed sites, say so plainly and stop — do not fall back to general knowledge.
+Prefer systematic reviews, meta-analyses, NICE/SIGN guidance and official leaflets over single studies.
+Always give the evidence for benefit AND for harm. Never list only benefits. If a claimed mechanism has been disproven, say so.
+If the evidence is mixed, small, low quality or absent, say "the evidence here is unclear" in those words. Never sound more certain than the sources are. If sources disagree with each other, say that they disagree.
+Be alert to US sources: UK drug names, availability and units apply.
+
+HOW TO WRITE
+Plain English. Short sentences, one idea each. Define every medical term the first time it appears. No unexplained jargon. Be brief — aim for under 350 words in total; this will be read on a phone and may be printed on one side of A4.
+Do not write a sources or references section and do not paste URLs; the page builds the sources list from your citations.
+
+SHAPE — use exactly these markdown headings, in this order.
+## Is this the right question?
+Only include this section if a different question matters more (for example, new memory trouble at 80 needs assessing before asking which vitamin helps memory). Otherwise leave it out entirely.
+## Short answer
+Two or three sentences.
+## What the good evidence shows
+## What is still uncertain
+Either of the two sections above may be a single sentence such as "No good evidence exists on this." Do not pad.
+If the question asks what something IS or how it works (a test, a scan, a procedure, a condition) rather than whether something helps, use the headings "## How it works" and "## What to expect" in place of those two.
+## Risks, side effects and interactions
+Include interactions with medicines commonly taken by older people (blood pressure, blood thinners, diabetes, heart, pain relief) when relevant.
+## Questions to ask your GP or pharmacist
+Up to three specific questions. Zero is acceptable if nothing needs asking.
+
+KNOWN CHATBOT FAILURES — guard against each one explicitly (Tiller et al., BMJ Open 2026)
+1. Hallucination: if a fact is not in a page you retrieved this turn, do not state it. No exceptions for "well known" facts.
+2. Fabricated or stitched references: never name a study, author, journal or year from memory. Only what you retrieved.
+3. Sycophancy and completeness bias: an honest "the evidence here is unclear" or "the trusted sites do not cover this" is a complete answer. Never fill a section to look thorough. Never soften a harm because the reader seems keen on the remedy.
+4. False balance: never present a popular belief, anecdote or marketing claim alongside or ahead of the evidence as if they were equals. If you mention such a claim at all, label it unproven and put it after the evidence.
+5. Marketing language: never repeat a manufacturer's, seller's or clinic's claim as fact, even if a trusted page quotes it.
+6. Overconfidence: absolute statements ("always", "proven", "completely safe") are a warning sign. Match your certainty to the strength of the evidence and say what kind of evidence it is (trial, review, guideline, leaflet).
+7. Risk severity: if the question is a narrow, high-consequence decision — which treatment to have, whether to have a procedure or test, whether a symptom is serious, anything about a complex condition — say plainly that this is a decision for a clinician, keep the answer short, and put your effort into the questions to ask.
+
+NEVER
+Never give a dose, a schedule, a brand recommendation, or a "safe amount".
+Never suggest starting, stopping or changing a prescribed medicine.
+Never diagnose. You may describe what a symptom can be associated with; you may not say what this person has.`;
+
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+const HEADINGS = ["Is this the right question?","Short answer","What the good evidence shows","How it works","What is still uncertain","What to expect","Risks, side effects and interactions","Questions to ask your GP or pharmacist"];
+function tidy(t){ // Anthropic splits text into blocks at citations and the newline after a heading can vanish there
+  for (const h of HEADINGS) t = t.replace(new RegExp("\\n?#{1,3}\\s*" + h.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\s*:?\\n?", "g"), "\n## " + h + "\n");
+  return t.replace(/([^\n])(#{1,3} )/g, "$1\n$2");
+}
+function md(src){ // ponytail: tiny renderer — headings, bold, lists, paragraphs. Enough for the fixed shape.
+  const out=[]; let list=null;
+  const inline = t => esc(t).replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+  for (const raw of src.split("\n")) {
+    const line = raw.trim();
+    const li = line.match(/^[-*•]\s+(.*)/);
+    if (li) { if(!list){list=[];} list.push("<li>"+inline(li[1])+"</li>"); continue; }
+    if (list) { out.push("<ul>"+list.join("")+"</ul>"); list=null; }
+    if (!line) continue;
+    const h = line.match(/^#{1,3}\s+(.*)/);
+    out.push(h ? "<h2>"+inline(h[1])+"</h2>" : "<p>"+inline(line)+"</p>");
+  }
+  if (list) out.push("<ul>"+list.join("")+"</ul>");
+  return out.join("");
+}
+
+async function ask(question){
+  const messages = [{ role:"user", content: question }];
+  const blocksAll = []; const citations = new Map(); let stop = null;
+  $("searches").innerHTML = "";
+  for (let turn=0; turn<4; turn++) {                 // pause_turn loop: resend the assistant message unchanged
+    const res = await fetch("./api/ask", {
+      method:"POST",
+      headers: { "content-type":"application/json", "anthropic-version":"2023-06-01" },
+      body: JSON.stringify({
+        model: MODEL, max_tokens: 2500, stream: true, system: SYSTEM, messages,
+        tools: [{ type:"web_search_20250305", name:"web_search", max_uses:6, allowed_domains: ALLOWED_DOMAINS,
+                  user_location:{ type:"approximate", country:"GB", timezone:"Europe/London" } }]
+      })
+    });
+    if (res.status === 401) throw new Error("This page needs its password again. Reload the page and enter it.");
+    if (res.status === 429) throw new Error("Too many questions in the last hour. Please try again later.");
+    if (!res.ok) throw new Error("The service returned an error (" + res.status + "). Please try again in a minute.");
+    const blocks = {}; let buf = ""; stop = null;
+    const reader = res.body.getReader(); const dec = new TextDecoder();
+    while (true) {
+      const {value, done} = await reader.read(); if (done) break;
+      buf += dec.decode(value, {stream:true});
+      const lines = buf.split("\n"); buf = lines.pop();
+      for (const l of lines) {
+        if (!l.startsWith("data:")) continue;
+        let ev; try { ev = JSON.parse(l.slice(5)); } catch { continue; }
+        if (ev.type==="content_block_start") { blocks[ev.index] = {...ev.content_block, _json:"" }; if (ev.content_block.type==="text") blocks[ev.index].text=""; }
+        else if (ev.type==="content_block_delta") {
+          const b = blocks[ev.index], d = ev.delta;
+          if (d.type==="text_delta") { b.text += d.text; renderText(blocksAll.concat(Object.values(blocks))); }
+          else if (d.type==="input_json_delta") b._json += d.partial_json;
+          else if (d.type==="citations_delta") { (b.citations ||= []).push(d.citation); if (d.citation.url) citations.set(d.citation.url, d.citation.title||d.citation.url); }
+        }
+        else if (ev.type==="content_block_stop") {
+          const b = blocks[ev.index];
+          if (b.type==="server_tool_use") { try { b.input = JSON.parse(b._json||"{}"); } catch { b.input={}; } if (b.input.query) $("searches").insertAdjacentHTML("beforeend","<li>Looking up: "+esc(b.input.query)+"</li>"); }
+          delete b._json;
+        }
+        else if (ev.type==="message_delta") stop = ev.delta.stop_reason;
+        else if (ev.type==="error") throw new Error(ev.error?.message || "stream error");
+      }
+    }
+    const content = Object.keys(blocks).sort((a,b)=>a-b).map(k=>blocks[k]);
+    blocksAll.push(...content);
+    if (stop !== "pause_turn") break;
+    messages.push({ role:"assistant", content });
+  }
+  return { text: tidy(blocksAll.filter(b=>b.type==="text").map(b=>b.text).join("")), citations };
+}
+
+let lastText = "", lastQuestion = "";
+function renderText(blocks){
+  let t = tidy(blocks.filter(b=>b.type==="text").map(b=>b.text||"").join(""));
+  const banner = $("banner"); banner.innerHTML = "";
+  if (/^\s*URGENT-999/.test(t)) { const b = '<div class="banner b999">This needs urgent medical help now. Phone 999.</div>'; banner.innerHTML = b; $("alert").innerHTML = b; $("body").innerHTML=""; return; }
+  if (/^\s*URGENT-111/.test(t)) { banner.innerHTML = '<div class="banner b111">Please phone 111 today, or speak to your GP surgery, about this. The notes below are for that conversation.</div>'; t = t.replace(/^\s*URGENT-111\s*/, ""); }
+  $("body").innerHTML = md(t);
+}
+function renderSources(citations){
+  const s = $("sources"); s.innerHTML = "";
+  if (!citations.size) { s.innerHTML = "<p class='caveat'>No pages from the trusted sites were used for this answer.</p>"; return; }
+  s.innerHTML = "<h2>Pages it read</h2><ol>" + [...citations].map(([u,t]) => `<li><a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)}</a><small>${esc(u)}</small></li>`).join("") + "</ol>";
+}
+
+async function run(){
+  const q = $("q").value.trim(); if (!q) { $("q").focus(); return; }
+  lastQuestion = q; $("go").disabled = true; $("go").textContent = "Working…";
+  $("status").style.display = "block"; $("answer").style.display = "block";
+  $("qecho").textContent = "Your question: " + q; $("body").innerHTML = ""; $("banner").innerHTML = ""; $("alert").innerHTML = ""; $("sources").innerHTML = "";
+  try {
+    const { text, citations } = await ask(q);
+    lastText = text; renderSources(citations); $("save").textContent = "Save this answer"; $("save").disabled = false;
+  } catch (e) {
+    $("body").innerHTML = "<p class='err'>That didn't work. " + esc(e.message) + "</p>";
+  } finally {
+    $("go").disabled = false; $("go").textContent = "Find out"; $("status").style.display = "none";
+    if ($("alert").innerHTML) window.scrollTo({ top:0, behavior:"instant" }); else $("answer").scrollIntoView({ block:"start" });
+  }
+}
+
+$("go").onclick = run;
+$("q").addEventListener("keydown", e => { if (e.key==="Enter" && !e.shiftKey) { e.preventDefault(); run(); } });
+$("print").onclick = () => window.print();
+function shareText(){
+  const links = [...$("sources").querySelectorAll("a")].map(a => "- " + a.href).join("\n");
+  return "Question: " + lastQuestion + "\n\n" + lastText.replace(/^\s*URGENT-\d+\s*/,"").replace(/^#+\s*/gm,"").replace(/\*\*/g,"") +
+    (links ? "\n\nPages it read:\n" + links : "") + "\n\n(From Ask About Your Health — an AI summary of NHS / NICE / Cochrane / PubMed pages. Please check with your GP.)";
+}
+$("copy").onclick = async () => {
+  try { await navigator.clipboard.writeText(shareText()); $("copy").lastChild.textContent = " Copied ✓"; }
+  catch { $("copy").lastChild.textContent = " Could not copy"; }
+  setTimeout(() => { $("copy").lastChild.textContent = " Copy"; }, 2500);
+};
+$("share").onclick = async () => {
+  const text = shareText(), title = "Health question: " + lastQuestion.slice(0, 60);
+  if (navigator.share) { try { await navigator.share({ title, text }); } catch {} }   // the phone's own share sheet: WhatsApp, Messages, Mail…
+  else location.href = "mailto:?subject=" + encodeURIComponent(title) + "&body=" + encodeURIComponent(text.slice(0, 1800));
+};
+// Saved answers live in this browser's own storage — never on the server, never visible to anyone else.
+const SAVED_KEY = "askhealth.saved";
+const readSaved = () => { try { return JSON.parse(localStorage.getItem(SAVED_KEY) || "[]"); } catch { return []; } };
+const writeSaved = list => { try { localStorage.setItem(SAVED_KEY, JSON.stringify(list.slice(0, 50))); return true; } catch { return false; } };
+$("save").onclick = () => {
+  const rec = { id: crypto.randomUUID(), created_at: new Date().toISOString(), question:lastQuestion, answer:lastText, sources:[...$("sources").querySelectorAll("a")].map(a=>a.href).join("\n") };
+  if (writeSaved([rec, ...readSaved()])) { $("save").textContent = "Saved on this device ✓"; $("save").disabled = true; loadSaved(); }
+  else $("save").textContent = "Could not save on this device";
+};
+function loadSaved(){
+  try {
+    const records = readSaved(); const wrap = $("savedwrap"); const list = $("savedlist");
+    wrap.hidden = !records.length; list.innerHTML = "";
+    for (const rec of records) {
+      const d = rec; const when = new Date(rec.created_at).toLocaleDateString("en-GB", { day:"numeric", month:"long", year:"numeric" });
+      const links = (d.sources||"").split("\n").filter(Boolean).map(u => `<li><a href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\/(www\.)?/,""))}</a></li>`).join("");
+      const el = document.createElement("details"); el.className = "savedItem";
+      el.innerHTML = `<summary><strong>${esc(d.question)}</strong> <span class="attrib">${esc(when)}</span></summary>${md((d.answer||"").replace(/^\s*URGENT-\d+\s*/,""))}${links ? "<h3>Pages it read</h3><ul>"+links+"</ul>" : ""}<p><button type="button" class="remove">Remove</button></p>`;
+      el.querySelector(".remove").onclick = () => { writeSaved(readSaved().filter(r => r.id !== rec.id)); loadSaved(); };
+      list.appendChild(el);
+    }
+  } catch {}
+}
+loadSaved();
+
+if (CONTACT_EMAIL) $("fbnote").innerHTML = 'Or email <a href="mailto:' + esc(CONTACT_EMAIL) + '">' + esc(CONTACT_EMAIL) + '</a>.';
+if (RESEARCH_NOTEBOOK_URL) { $("notebooklink").href = RESEARCH_NOTEBOOK_URL; $("notebook").hidden = false; }
+$("fbsend").onclick = async () => {
+  const message = $("fb").value.trim(); if (!message) { $("fb").focus(); return; }
+  $("fbsend").disabled = true; $("fbsend").textContent = "Sending…";
+  try {
+    const r = await fetch("./.herenow/data/feedback", { method:"POST", headers:{ "content-type":"application/json", "Idempotency-Key": crypto.randomUUID() }, body: JSON.stringify({ message }) });
+    if (r.ok) { $("fb").value = ""; $("fbsend").textContent = "Sent — thank you"; }
+    else { $("fbsend").textContent = "Could not send — try again"; $("fbsend").disabled = false; }
+  } catch { $("fbsend").textContent = "Could not send — try again"; $("fbsend").disabled = false; }
+};
+</script>
+</body>
+</html>

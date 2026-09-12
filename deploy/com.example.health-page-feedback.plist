@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.example.health-page-feedback</string>
+  <key>ProgramArguments</key><array><string>/Users/YOU/ask-about-your-health/bin/check-feedback.sh</string></array>
+  <key>EnvironmentVariables</key><dict>
+    <key>SITE_SLUG</key><string>your-here-now-slug</string>
+    <key>EXPECTED_COUNTRIES</key><string>GB</string>
+    <key>NOTIFY_CMD</key><string>/Users/YOU/bin/notify</string>
+  </dict>
+  <key>StartInterval</key><integer>604800</integer>
+  <key>RunAtLoad</key><true/>
+</dict></plist>

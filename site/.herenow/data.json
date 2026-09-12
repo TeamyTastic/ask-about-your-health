@@ -1,0 +1,21 @@
+{
+  "collections": {
+    "feedback": {
+      "fields": {
+        "message": {
+          "type": "string",
+          "required": true,
+          "maxLength": 2000,
+          "trim": true
+        }
+      },
+      "access": {
+        "read": "owner",
+        "insert": "public",
+        "update": "owner",
+        "delete": "owner"
+      },
+      "rateLimit": "10/hour/ip"
+    }
+  }
+}

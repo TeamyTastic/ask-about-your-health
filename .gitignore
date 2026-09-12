@@ -1,0 +1,6 @@
+.herenow/state.json
+.state/
+.venv/
+spec/screens/
+__pycache__/
+.DS_Store

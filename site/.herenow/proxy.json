@@ -8,14 +8,6 @@
         "anthropic-version": "2023-06-01"
       },
       "rateLimit": "20/hour/ip"
-    },
-    "/api/ask-or": {
-      "upstream": "https://openrouter.ai/api/v1/chat/completions",
-      "method": "POST",
-      "headers": {
-        "Authorization": "Bearer ${OPENROUTER_API_KEY}"
-      },
-      "rateLimit": "20/hour/ip"
     }
   }
 }

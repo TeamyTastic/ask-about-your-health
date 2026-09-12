@@ -213,10 +213,6 @@
 const CONTACT_EMAIL = "you@example.com";          // shown under the feedback box; leave "" to hide the line
 const RESEARCH_NOTEBOOK_URL = "";                  // optional: a NotebookLM (or any) link to the research behind the page
 const MODEL = "claude-opus-5";                     // see README: Opus 5 kept the guideline-level sources in testing
-const PROVIDER = "anthropic";                      // "anthropic" (default: fastest, best sources, 30-day retention)
-                                                   // or "openrouter" (zero data retention incl. the search step; ~80 s per question) — see README
-const OPENROUTER_MODEL = "openai/gpt-5.5";         // needs a model whose provider offers native web search on a ZDR endpoint: GPT-5.x on Azure did
-const OPENROUTER_EFFORT = "medium";                // "low" halves the wait but lost the reframe and some warnings in testing
 const ALLOWED_DOMAINS = [
   "nhs.uk", "nhsinform.scot", "111.nhs.uk",
   "nice.org.uk", "cks.nice.org.uk", "bnf.nice.org.uk", "sign.ac.uk",
@@ -301,35 +297,7 @@ function md(src){ // ponytail: tiny renderer — headings, bold, lists, paragrap
   return out.join("");
 }
 
-// OpenRouter path: OpenAI-format chat completions, streamed; citations arrive as url_citation annotations in the deltas.
-async function askOpenRouter(question){
-  const res = await fetch("./api/ask-or", { method:"POST", headers:{ "content-type":"application/json" },
-    body: JSON.stringify({ model: OPENROUTER_MODEL, provider:{ zdr:true }, stream:true, max_tokens:4000, reasoning:{ effort: OPENROUTER_EFFORT },
-      plugins:[{ id:"web", engine:"native", max_results:6, include_domains: ALLOWED_DOMAINS.filter(d => !d.includes("/")) }],   // OpenAI's filter takes bare domains only
-      messages:[{ role:"system", content: SYSTEM }, { role:"user", content: question }] }) });
-  if (res.status === 401) throw new Error("This page needs its password again. Reload the page and enter it.");
-  if (!res.ok) throw new Error("The service returned an error (" + res.status + "). Please try again in a minute.");
-  $("searches").insertAdjacentHTML("beforeend", "<li>Searching the trusted sites…</li>");
-  const citations = new Map(); let text = "", buf = "";
-  const reader = res.body.getReader(); const dec = new TextDecoder();
-  while (true) {
-    const {value, done} = await reader.read(); if (done) break;
-    buf += dec.decode(value, {stream:true});
-    const lines = buf.split("\n"); buf = lines.pop();
-    for (const l of lines) {
-      if (!l.startsWith("data:") || l.trim() === "data: [DONE]") continue;
-      let ev; try { ev = JSON.parse(l.slice(5)); } catch { continue; }
-      const d = (ev.choices && ev.choices[0] && ev.choices[0].delta) || {};
-      if (d.content) { text += d.content; renderText([{ type:"text", text }]); }
-      for (const a of d.annotations || []) if (a.type === "url_citation" && a.url_citation?.url) citations.set(a.url_citation.url, a.url_citation.title || a.url_citation.url);
-      if (ev.error) throw new Error(ev.error.message || "stream error");
-    }
-  }
-  return { text: tidy(text), citations };
-}
-
 async function ask(question){
-  if (PROVIDER === "openrouter") return askOpenRouter(question);
   const messages = [{ role:"user", content: question }];
   const blocksAll = []; const citations = new Map(); let stop = null;
   $("searches").innerHTML = "";

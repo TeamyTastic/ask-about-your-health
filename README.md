@@ -96,52 +96,25 @@ Same question, same prompt, same allow-list:
 | Claude Opus 5 + Anthropic search | ~30 s | 7–10 incl. NHS, NICE, MHRA | yes | ≈ $0.35 |
 | Claude Sonnet 5 + Anthropic search | ~20 s | 3 incl. NHS Wales | yes | ≈ $0.14 |
 | DeepSeek V4.1 Flash via OpenRouter + Exa | ~25 s | 6, PubMed/PMC only | **no** — Exa returned ~4k tokens of abstracts vs ~47k tokens of page content | ≈ $0.01 |
-| GPT-5.5 via OpenRouter ZDR + OpenAI search | ~80 s | 5 incl. NICE, Cochrane, NHS | yes | ≈ $0.33 |
 
 Opus is the default because the missing paragraph in the cheap run was the one that mattered. Full answers are in `spec/compare/`. Cost is dominated by the ~50k input tokens of fetched pages, not by output.
 
-### Zero data retention (ZDR) — the privacy-first alternative
-
-*ZDR* means the provider deletes your prompt and the answer as soon as it has replied — nothing logged, nothing kept to train on. The default route (Anthropic direct) is **not** ZDR: Anthropic keeps API traffic for ~30 days (not used for training). Through [OpenRouter](https://openrouter.ai) you can force ZDR routing (`"provider": {"zdr": true}`), and the page supports that as a second provider: set `PROVIDER = "openrouter"`, store an `OPENROUTER_API_KEY` variable at here.now, and the `/api/ask-or` route is already in `proxy.json`. What we measured:
-
-| Route | ZDR | Retrieval | Found the liver / blood-thinner warnings | Time | Cost |
-|---|---|---|---|---|---|
-| Opus 5, Anthropic direct (default) | no | Anthropic search: NHS, NICE, MHRA | yes | ~30 s | ≈ $0.35 |
-| Opus 5 via OpenRouter ZDR | — | not possible: its ZDR endpoints (Bedrock, Vertex) have no native search | — | — | — |
-| DeepSeek V4.1 Flash via OpenRouter ZDR + Exa search | model only — Exa is a third party | PubMed abstracts only (~4k tokens) | **no** | ~25 s | ≈ $0.01 |
-| **GPT-5.5 via OpenRouter ZDR (Azure), OpenAI's own search** | **yes, including the search** | NICE, Cochrane, NHS | yes | ~80–90 s | ≈ $0.33 |
-| same, reasoning effort "low" | yes | 4 sources | thinner | ~40 s | ≈ $0.14 |
-
-The honest trade is **privacy versus waiting time**: GPT-5.5 on a ZDR endpoint matched Opus on the content that matters, at the same cost, but takes roughly three times as long — and for an older user, 80 seconds looking at "Looking up…" is a real cost. Two practical notes if you choose it: OpenAI's domain filter takes bare domains only (the path-scoped MHRA and legacy-PMC entries are dropped automatically), and an OpenRouter account with ZDR enforced in its privacy settings refuses any non-ZDR route — which is a feature.
-
-#### ZDR models on OpenRouter worth considering (from OpenRouter's live ZDR endpoint list, September 2026)
-
-The allow-list is only *enforced* when the model's own provider does the searching (`engine: "native"`). Only some providers offer that, and only some of those have ZDR endpoints. So there are two tiers:
-
-**Tier A — provider-native search with domain filtering, on a ZDR endpoint.** The only tier where the source restriction is guaranteed *and* the search stays inside the ZDR promise.
-
-| Model | ZDR host | Price in / out per MTok | Status |
-|---|---|---|---|
-| `openai/gpt-5.5` | Azure | $5 / $30 | **tested** — matched Opus on safety content, ~80 s |
-| `openai/gpt-5.4`, `gpt-5.2`, `gpt-5.1` | Azure | $2.50 / $15 · $1.75 / $14 · $1.25 / $10 | untested; same search tool, cheaper — likely the sweet spot, measure before trusting |
-| `x-ai/grok-4.6` / `grok-4.5` | xAI, Bedrock | $2 / $6 | untested; xAI native search supports `include_domains`. **Caution:** in the BMJ audit Grok produced more highly-problematic health answers than chance, attributed to training on X posts — the allow-list constrains what it *reads*, not what it *believes* |
-| `perplexity/sonar-pro`, `sonar-reasoning-pro` | Perplexity | $3 / $15 · $2 / $8 | untested; search-first models with domain filtering in their own API |
-| `google/gemini-3-pro` | Google | — | **not usable here**: OpenRouter's docs say Google's native search ignores domain filters |
-| `anthropic/claude-opus-5` / `sonnet-5` | Bedrock, Vertex | — | **not usable here**: those endpoints have no native web search (use Anthropic direct instead — fast, not ZDR) |
-
-**Tier B — strong open-weight models on ZDR endpoints, but search via the Exa plugin.** Cheap and genuinely capable models; the weakness is retrieval, not reasoning — Exa returned abstracts and no NHS/NICE page in our test, and Exa sits outside the ZDR promise. Fine for low-stakes "what is X" questions; we would not use them for medicines or symptoms.
-
-| Model | Price in / out per MTok | Note |
-|---|---|---|
-| `deepseek/deepseek-v4-pro` · `deepseek-v4.1-flash` | $0.77 / $1.54 · $0.15 / $0.60 | V4.1 Flash **tested**: well-written, missed the liver warning |
-| `moonshotai/kimi-k2.6` · `kimi-k2.5` | $0.95 / $4 · $0.45 / $2.25 | strong general models |
-| `z-ai/glm-5.3` · `glm-5.3-flash` | $1.40 / $4.40 · $0.07 / $0.25 | many ZDR hosts |
-| `qwen/qwen3.8-27b` · `qwen3.5-397b-a17b` | $0.21 / $2.55 · $0.55 / $3.50 | |
-| `meta-llama/llama-4-maverick` · `mistralai/mistral-large-2512` | $0.20 / $0.70 · $0.50 / $1.50 | |
-
-Check the current list yourself: `curl -s https://openrouter.ai/api/v1/endpoints/zdr` (public, no key). `spec/compare-openrouter.py` runs the same two questions against any of these: `OR_MODEL=… OR_ENGINE=native|exa OR_ZDR=1 OR_BARE_DOMAINS=1`.
-
 **Rule of thumb: match the model to the stakes.** The more the answer matters — a symptom, a medicine, a decision about treatment — the more capable the model should be. Saving 25p on a question about a blood thinner is the wrong trade. This applies doubly if you use the prompt in an ordinary chatbot (`PROMPT.md`), where nothing enforces the source list.
+
+## Where the data goes — Anthropic's terms, in plain words
+
+The page sends each question to Anthropic's API and nowhere else (the searched websites see only the search queries Anthropic makes). What Anthropic does with it, from their own policies as of September 2026 — check the linked pages for the current wording:
+
+| | |
+|---|---|
+| **Kept for** | Inputs and outputs are automatically deleted from Anthropic's backend **within 30 days**. If a request is flagged by their automated trust-and-safety systems it can be kept for up to 2 years. ([commercial data retention policy](https://privacy.claude.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data)) |
+| **Used for training?** | No — "retained data is never used for model training without your express permission." ([API and data retention](https://platform.claude.com/docs/en/manage-claude/api-and-data-retention)) |
+| **Stored where** | At rest in the **United States** — `"us"` is currently the only workspace geo. Inference runs anywhere by default (`inference_geo: "global"`); you can pin it to the US for 1.1× the price, but there is no EU/UK option. For a UK family this is an international transfer under UK GDPR; Anthropic's [DPA](https://www.anthropic.com/legal/commercial-terms) covers it, but it is worth knowing. ([data residency](https://platform.claude.com/docs/en/manage-claude/data-residency)) |
+| **Zero data retention** | Available by arrangement with Anthropic (an enterprise contract, not a checkbox). The web-search tool this page uses is ZDR-eligible; a personal Console account will not have it. |
+| **Governing documents** | [Commercial Terms of Service](https://www.anthropic.com/legal/commercial-terms) · [Privacy Policy](https://www.anthropic.com/legal/privacy) · [Trust Center](https://trust.anthropic.com) |
+| **What the page itself keeps** | Nothing, unless the reader presses *Save* (then only in their own browser). The site owner sees the feedback box and country-level visit counts, never questions or answers. |
+
+**Alternatives we measured and did not adopt.** Routing through OpenRouter with zero-retention endpoints was tested: Claude on those endpoints has no web search; cheaper models with a third-party search plugin (Exa) lost the NHS/NICE pages and the liver-injury warning; GPT-5.5 with OpenAI's own search on Azure matched Opus on content, at the same cost, but took 80–90 s per question. For an older reader the wait mattered more than the retention difference, so the default stays with Anthropic direct. If ZDR matters more to you than speed, that GPT-5.5 route is viable and the page's `ask()` function is the only thing to change.
 
 ## Deploy your own
 

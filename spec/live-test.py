@@ -28,7 +28,7 @@ def ask(q):
     msgs = [{"role": "user", "content": q}]; texts = []; cites = []; usage = {"searches": 0, "in": 0, "out": 0}
     for _ in range(4):
         body = json.dumps({"model": MODEL, "max_tokens": 2500, "system": SYSTEM, "messages": msgs,
-            "tools": [{"type": "web_search_20250305", "name": "web_search", "max_uses": 6, "allowed_domains": ALLOWED,
+            "tools": [{"type": "web_search_20250305", "name": "web_search", "max_uses": 4, "allowed_domains": ALLOWED,
                        "user_location": {"type": "approximate", "country": "GB", "timezone": "Europe/London"}}]}).encode()
         req = urllib.request.Request(SITE + "/api/ask", data=body, headers={"content-type": "application/json", "anthropic-version": "2023-06-01", "Origin": SITE, "User-Agent": UA})
         t0 = time.time()

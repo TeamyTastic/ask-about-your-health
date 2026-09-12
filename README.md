@@ -114,6 +114,33 @@ Opus is the default because the missing paragraph in the cheap run was the one t
 
 The honest trade is **privacy versus waiting time**: GPT-5.5 on a ZDR endpoint matched Opus on the content that matters, at the same cost, but takes roughly three times as long — and for an older user, 80 seconds looking at "Looking up…" is a real cost. Two practical notes if you choose it: OpenAI's domain filter takes bare domains only (the path-scoped MHRA and legacy-PMC entries are dropped automatically), and an OpenRouter account with ZDR enforced in its privacy settings refuses any non-ZDR route — which is a feature.
 
+#### ZDR models on OpenRouter worth considering (from OpenRouter's live ZDR endpoint list, September 2026)
+
+The allow-list is only *enforced* when the model's own provider does the searching (`engine: "native"`). Only some providers offer that, and only some of those have ZDR endpoints. So there are two tiers:
+
+**Tier A — provider-native search with domain filtering, on a ZDR endpoint.** The only tier where the source restriction is guaranteed *and* the search stays inside the ZDR promise.
+
+| Model | ZDR host | Price in / out per MTok | Status |
+|---|---|---|---|
+| `openai/gpt-5.5` | Azure | $5 / $30 | **tested** — matched Opus on safety content, ~80 s |
+| `openai/gpt-5.4`, `gpt-5.2`, `gpt-5.1` | Azure | $2.50 / $15 · $1.75 / $14 · $1.25 / $10 | untested; same search tool, cheaper — likely the sweet spot, measure before trusting |
+| `x-ai/grok-4.6` / `grok-4.5` | xAI, Bedrock | $2 / $6 | untested; xAI native search supports `include_domains`. **Caution:** in the BMJ audit Grok produced more highly-problematic health answers than chance, attributed to training on X posts — the allow-list constrains what it *reads*, not what it *believes* |
+| `perplexity/sonar-pro`, `sonar-reasoning-pro` | Perplexity | $3 / $15 · $2 / $8 | untested; search-first models with domain filtering in their own API |
+| `google/gemini-3-pro` | Google | — | **not usable here**: OpenRouter's docs say Google's native search ignores domain filters |
+| `anthropic/claude-opus-5` / `sonnet-5` | Bedrock, Vertex | — | **not usable here**: those endpoints have no native web search (use Anthropic direct instead — fast, not ZDR) |
+
+**Tier B — strong open-weight models on ZDR endpoints, but search via the Exa plugin.** Cheap and genuinely capable models; the weakness is retrieval, not reasoning — Exa returned abstracts and no NHS/NICE page in our test, and Exa sits outside the ZDR promise. Fine for low-stakes "what is X" questions; we would not use them for medicines or symptoms.
+
+| Model | Price in / out per MTok | Note |
+|---|---|---|
+| `deepseek/deepseek-v4-pro` · `deepseek-v4.1-flash` | $0.77 / $1.54 · $0.15 / $0.60 | V4.1 Flash **tested**: well-written, missed the liver warning |
+| `moonshotai/kimi-k2.6` · `kimi-k2.5` | $0.95 / $4 · $0.45 / $2.25 | strong general models |
+| `z-ai/glm-5.3` · `glm-5.3-flash` | $1.40 / $4.40 · $0.07 / $0.25 | many ZDR hosts |
+| `qwen/qwen3.8-27b` · `qwen3.5-397b-a17b` | $0.21 / $2.55 · $0.55 / $3.50 | |
+| `meta-llama/llama-4-maverick` · `mistralai/mistral-large-2512` | $0.20 / $0.70 · $0.50 / $1.50 | |
+
+Check the current list yourself: `curl -s https://openrouter.ai/api/v1/endpoints/zdr` (public, no key). `spec/compare-openrouter.py` runs the same two questions against any of these: `OR_MODEL=… OR_ENGINE=native|exa OR_ZDR=1 OR_BARE_DOMAINS=1`.
+
 **Rule of thumb: match the model to the stakes.** The more the answer matters — a symptom, a medicine, a decision about treatment — the more capable the model should be. Saving 25p on a question about a blood thinner is the wrong trade. This applies doubly if you use the prompt in an ordinary chatbot (`PROMPT.md`), where nothing enforces the source list.
 
 ## Deploy your own

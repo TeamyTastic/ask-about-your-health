@@ -5,10 +5,11 @@ root = pathlib.Path(__file__).resolve().parents[1]
 html = (root / "site/index.html").read_text()
 system = re.search(r"const SYSTEM = `(.*?)`;", html, re.S).group(1).strip()
 domains = re.findall(r'"([a-z0-9.\-]+\.[a-z]+(?:/[^"]*)?)"', re.search(r"const ALLOWED_DOMAINS = \[(.*?)\];", html, re.S).group(1))
-chatbot_version = system.replace(
-    "You have web search restricted to trusted UK and academic medical sites. Use it on every question. Never answer from memory.",
-    "Use web search on every question and read ONLY these sites: " + ", ".join(domains) + ". If a result is from any other site, ignore it. Never answer from memory.")
-chatbot_version += "\n\nAt the end, list the pages you actually read, with their full web addresses. If you did not read any page from the sites above, say so and stop."
+SEARCH_SENTENCE = "You have web search restricted to trusted UK and academic medical sites. Use it on every question. Never answer from memory."
+SEARCH_REPLACEMENT = "Use web search on every question and read ONLY these sites: " + ", ".join(domains) + ". If a result is from any other site, ignore it. Never answer from memory."
+SOURCES_SENTENCE = "Do not write a sources or references section and do not paste URLs; the page builds the sources list from your citations."
+SOURCES_REPLACEMENT = "At the end, list the pages you actually read, with their full web addresses. If you did not read any page from the sites above, say so and stop."
+chatbot_version = system.replace(SEARCH_SENTENCE, SEARCH_REPLACEMENT).replace(SOURCES_SENTENCE, SOURCES_REPLACEMENT)
 out = f"""# The prompt
 
 This is the exact instruction the page gives the AI on every question. Two ways to use it.
@@ -29,13 +30,12 @@ Copy everything in the box below into ChatGPT, Claude, Gemini or whichever you u
 {chatbot_version}
 ```
 
-## 2. The version the page uses
+## What the page's own version changes
 
-Identical, except the site restriction is enforced by the API rather than requested in words:
+The page uses this same prompt, except for two sentences:
 
-```text
-{system}
-```
+- Site restriction is enforced by the API (`allowed_domains` on the web search tool), not requested in words. The page's prompt says: "{SEARCH_SENTENCE}"
+- The page builds its own sources list from citations, so it tells the model not to write one, rather than asking it to list pages read. The page's prompt says: "{SOURCES_SENTENCE}"
 
 Allowed sites (enforced with `allowed_domains` on Anthropic's web search tool): `{"`, `".join(domains)}`
 

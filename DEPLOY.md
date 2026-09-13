@@ -39,7 +39,12 @@ The agent does the steps below; you supply the three things only you can (accoun
 
 ## Level 3 — Step by step, for a person or an agent
 
-You need: a [here.now](https://here.now) account on a paid plan (proxy routes and analytics), and an [Anthropic Console](https://platform.claude.com) account.
+## Prerequisites
+
+- A [here.now](https://here.now) account on a paid plan (proxy routes and analytics need it).
+- An [Anthropic Console](https://platform.claude.com) account.
+- `python3` and Node (for `npx`).
+- `~/.herenow/credentials` is created by the here.now skill's sign-in flow (`publish.sh` walks you through an emailed code); it holds your here.now API key.
 
 **1. Make a dedicated Anthropic key with a spending limit.**
 Console → workspace switcher → *Create workspace* (call it `health-page`) → *Settings → Limits* → set a monthly limit (£10 is plenty for a family) → *API keys → Create key*. Copy it; it's shown once.
@@ -68,6 +73,7 @@ curl -sS -o /dev/null -w '%{http_code}\n' -X PATCH https://here.now/api/v1/publi
   -d '{"password":"CHOOSE-A-WORD"}'
 ```
 The password also gates the API route, so the paid key can't be used without it.
+Limits: 4 web searches per question, and the proxy route allows 20 questions per hour per IP address.
 
 **6. Make it permanent** (a fresh publish defaults to a temporary site):
 ```bash

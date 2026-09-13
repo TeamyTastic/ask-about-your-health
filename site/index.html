@@ -153,7 +153,7 @@
         <li>NHS <small>nhs.uk</small></li><li>NHS inform Scotland <small>nhsinform.scot</small></li><li>NHS 111 online <small>111.nhs.uk</small></li>
         <li>NICE guidelines and summaries <small>nice.org.uk</small></li><li>SIGN — Scottish guidelines <small>sign.ac.uk</small></li></ul></div>
       <div><h3>Medicines</h3><ul>
-        <li>eMC — official UK patient leaflets <small>medicines.org.uk</small></li><li>British National Formulary <small>bnf.nice.org.uk</small></li><li>MHRA Drug Safety Update <small>gov.uk</small></li></ul></div>
+        <li>eMC — official UK patient leaflets <small>medicines.org.uk</small></li><li>MHRA Drug Safety Update <small>gov.uk</small></li></ul></div>
       <div><h3>Research</h3><ul>
         <li>Cochrane reviews <small>cochranelibrary.com, cochrane.org</small></li><li>PubMed and PubMed Central <small>pubmed.ncbi.nlm.nih.gov, pmc.ncbi.nlm.nih.gov, ncbi.nlm.nih.gov/pmc</small></li></ul></div>
     </div>
@@ -215,7 +215,7 @@ const RESEARCH_NOTEBOOK_URL = "";                  // optional: a NotebookLM (or
 const MODEL = "claude-opus-5";                     // see README: Opus 5 kept the guideline-level sources in testing
 const ALLOWED_DOMAINS = [
   "nhs.uk", "nhsinform.scot", "111.nhs.uk",
-  "nice.org.uk", "cks.nice.org.uk", "bnf.nice.org.uk", "sign.ac.uk",
+  "nice.org.uk", "cks.nice.org.uk", "sign.ac.uk",
   "medicines.org.uk", "gov.uk/drug-safety-update",
   "cochranelibrary.com", "cochrane.org",
   "pubmed.ncbi.nlm.nih.gov", "pmc.ncbi.nlm.nih.gov", "ncbi.nlm.nih.gov/pmc"
@@ -225,9 +225,9 @@ const SYSTEM = `You are a careful medical research assistant writing for an olde
 You have web search restricted to trusted UK and academic medical sites. Use it on every question. Never answer from memory.
 
 URGENCY — check this first, before anything else.
-If the question describes any of: chest pain or pressure; sudden breathlessness; signs of a stroke even if they have passed (face drooping, arm weakness, slurred speech, sudden confusion, sudden loss of vision); a fall with a head injury; heavy bleeding; a sudden severe headache; fits; signs of a severe allergic reaction; signs of sepsis (very high or low temperature with confusion, mottled skin, not passing urine) —
+If the question describes any of: chest pain or pressure; sudden breathlessness; signs of a stroke even if they have passed (face drooping, arm weakness, slurred speech, sudden confusion, sudden loss of vision); a fall with a head injury; heavy bleeding; a sudden severe headache; fits; signs of a severe allergic reaction; signs of sepsis (very high or low temperature with confusion, mottled skin, not passing urine); thoughts of ending their life, or of harming themselves, with a plan or intent, or having already taken or done something —
 your ENTIRE reply is the single line:  URGENT-999
-If the question describes something that needs medical advice today but is not an emergency — black or tarry stools, blood in urine or when coughing, unexplained weight loss, a new lump, new memory change, a wound that is spreading or hot, a medicine side effect that is getting worse, a fall without head injury —
+If the question describes something that needs medical advice today but is not an emergency — black or tarry stools, blood in urine or when coughing, unexplained weight loss, a new lump, new memory change, a wound that is spreading or hot, a medicine side effect that is getting worse, a fall without head injury, thoughts of self-harm or suicide without immediate danger, or feeling unable to cope or keep safe —
 your reply STARTS with the single line  URGENT-111  and then continues with the normal answer.
 Otherwise, do not print any URGENT line.
 
@@ -352,7 +352,7 @@ function renderText(blocks){
   let t = tidy(blocks.filter(b=>b.type==="text").map(b=>b.text||"").join(""));
   const banner = $("banner"); banner.innerHTML = "";
   if (/^\s*URGENT-999/.test(t)) { const b = '<div class="banner b999">This needs urgent medical help now. Phone 999.</div>'; banner.innerHTML = b; $("alert").innerHTML = b; $("body").innerHTML=""; return; }
-  if (/^\s*URGENT-111/.test(t)) { banner.innerHTML = '<div class="banner b111">Please phone 111 today, or speak to your GP surgery, about this. The notes below are for that conversation.</div>'; t = t.replace(/^\s*URGENT-111\s*/, ""); }
+  if (/^\s*URGENT-111/.test(t)) { banner.innerHTML = '<div class="banner b111">Please phone 111 today, or speak to your GP surgery, about this. If you are struggling to cope, Samaritans are free to call on 116 123, any time. The notes below are for that conversation.</div>'; t = t.replace(/^\s*URGENT-111\s*/, ""); }
   $("body").innerHTML = md(t);
 }
 function renderSources(citations){

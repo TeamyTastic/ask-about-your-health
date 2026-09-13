@@ -107,6 +107,18 @@ The page sends each question through here.now's proxy to Anthropic's API (the se
 | **Governing documents** | [Commercial Terms of Service](https://www.anthropic.com/legal/commercial-terms) · [Privacy Policy](https://www.anthropic.com/legal/privacy) · [Trust Center](https://trust.anthropic.com) |
 | **What the page itself keeps** | Nothing, unless the reader presses *Save* (then only in their own browser). The site owner sees the feedback box and country-level visit counts, never questions or answers. |
 
+## The no-AI option
+
+Every answer costs money and about thirty seconds. Sometimes the reader just wants the pages. The button **"Or just show me the pages"** takes what they typed and opens Google restricted to the same trusted sites with the `site:` operator — deterministic, free, instant, no model in the path:
+
+```
+(site:nhs.uk OR site:nhsinform.scot OR site:nice.org.uk OR site:medicines.org.uk OR site:cochrane.org) their question
+```
+
+Keep that list short: Google counts operators toward its **32-word query limit**, so five sites leaves plenty of room for a real question. It is also the fallback when the hourly limit is hit or the API is down.
+
+What it does **not** do: no plain-English rewriting, no harms alongside benefits, no pharmacist routing, no 999 / 111 triage. It finds pages; it does not explain them. Both buttons on one page lets the reader choose.
+
 ## Limits
 
 - Max 4 web searches per question (`max_uses`).

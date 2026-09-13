@@ -43,6 +43,8 @@
   button { font:inherit; cursor:pointer; border-radius:8px; }
   .go { display:block; width:100%; margin-top:.7rem; padding:.9rem; font-size:1.15rem; font-weight:700; color:var(--accent-ink); background:var(--accent); border:0; }
   .go[disabled] { opacity:.6; cursor:wait; }
+  .alt { margin-top:.9rem; }
+  .alt button { background:none; border:0; padding:0; font-size:1rem; font-weight:700; color:var(--accent); text-decoration:underline; text-underline-offset:.15em; }
   .status { display:none; margin-top:1rem; padding:.8rem 1rem; background:var(--tint); border-left:4px solid var(--accent); font-size:.95rem; }
   .status ul { margin:.4rem 0 0; padding-left:1.2rem; color:var(--ink-2); }
   /* the answer is a sheet: the thing they will print and take to the surgery */
@@ -121,6 +123,7 @@
     <textarea id="q" placeholder="For example: Is turmeric any good for my arthritis?"></textarea>
     <button class="go" id="go" type="button">Find out</button>
     <p class="attrib" style="margin-top:.6rem">Not a diagnosis — it is there to help you have a better conversation with your GP or pharmacist.</p>
+    <p class="alt"><button type="button" id="pages">Or just show me the pages</button><br><span class="attrib">Searches the same trusted websites with Google and lists the pages. No AI, no waiting — you read them yourself.</span></p>
     <div class="status" id="status" role="status"><strong>Reading the medical sources… this usually takes about a minute.</strong><ul id="searches"></ul></div>
   </section>
 
@@ -378,6 +381,15 @@ async function run(){
 }
 
 $("go").onclick = run;
+
+// Plain search: no model, no cost, no waiting — Google restricted to the same sites.
+// Google counts operators toward its 32-word query limit, so this list stays short and patient-facing.
+const SEARCH_SITES = ["nhs.uk", "nhsinform.scot", "nice.org.uk", "medicines.org.uk", "cochrane.org"];
+$("pages").onclick = () => {
+  const q = $("q").value.trim(); if (!q) { $("q").focus(); return; }
+  const filter = "(" + SEARCH_SITES.map(s => "site:" + s).join(" OR ") + ") ";
+  window.open("https://www.google.com/search?q=" + encodeURIComponent(filter + q), "_blank", "noopener");
+};
 $("q").addEventListener("keydown", e => { if (e.key==="Enter" && !e.shiftKey) { e.preventDefault(); run(); } });
 $("print").onclick = () => window.print();
 function shareText(){

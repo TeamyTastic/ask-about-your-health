@@ -278,7 +278,7 @@ Never diagnose. You may describe what a symptom can be associated with; you may 
 
 const $ = id => document.getElementById(id);
 const esc = s => s.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const safeHref = u => /^https?:\/\//i.test(u) ? esc(u) : "#"; // esc() does not stop javascript: URLs
+const safeHref = u => /^https:\/\//i.test(u) ? esc(u) : null; // https-only; null means "render without a link"
 
 const HEADINGS = ["Is this the right question?","Short answer","What the good evidence shows","How it works","What is still uncertain","What to expect","Risks, side effects and interactions","Questions to ask your GP or pharmacist"];
 function tidy(t){ // Anthropic splits text into blocks at citations and the newline after a heading can vanish there
@@ -362,10 +362,11 @@ function renderText(blocks){
 function renderSources(citations){
   const s = $("sources"); s.innerHTML = "";
   if (!citations.size) { s.innerHTML = "<p class='caveat'>No pages from the trusted sites were used for this answer.</p>"; return; }
-  s.innerHTML = "<h2>Pages it read</h2><ol>" + [...citations].map(([u,t]) => `<li><a href="${safeHref(u)}" target="_blank" rel="noopener">${esc(t)}</a><small>${esc(u)}</small></li>`).join("") + "</ol>";
+  s.innerHTML = "<h2>Pages it read</h2><ol>" + [...citations].map(([u,t]) => { const href = safeHref(u); return href ? `<li><a href="${href}" target="_blank" rel="noopener">${esc(t)}</a><small>${esc(u)}</small></li>` : `<li>${esc(t)}<small>${esc(u)}</small></li>`; }).join("") + "</ol>";
 }
 
 async function run(){
+  if ($("go").disabled) return; // reentrancy guard: Enter can fire while a request is still in flight
   const q = $("q").value.trim(); if (!q) { $("q").focus(); return; }
   $("save").disabled = true; $("go").disabled = true; $("go").textContent = "Working…";
   $("status").style.display = "block"; $("answer").style.display = "block";
@@ -423,7 +424,7 @@ function loadSaved(){
     wrap.hidden = !records.length; list.innerHTML = "";
     for (const rec of records) {
       const d = rec; const when = new Date(rec.created_at).toLocaleDateString("en-GB", { day:"numeric", month:"long", year:"numeric" });
-      const links = (d.sources||"").split("\n").filter(Boolean).map(u => `<li><a href="${safeHref(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\/(www\.)?/,""))}</a></li>`).join("");
+      const links = (d.sources||"").split("\n").filter(Boolean).map(u => { const href = safeHref(u), label = esc(u.replace(/^https?:\/\/(www\.)?/,"")); return href ? `<li><a href="${href}" target="_blank" rel="noopener">${label}</a></li>` : `<li>${label}</li>`; }).join("");
       const el = document.createElement("details"); el.className = "savedItem";
       el.innerHTML = `<summary><strong>${esc(d.question)}</strong> <span class="attrib">${esc(when)}</span></summary>${md((d.answer||"").replace(/^\s*URGENT-\d+\s*/,""))}${links ? "<h3>Pages it read</h3><ul>"+links+"</ul>" : ""}<p><button type="button" class="remove">Remove</button></p>`;
       el.querySelector(".remove").onclick = () => { writeSaved(readSaved().filter(r => r.id !== rec.id)); loadSaved(); };

@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 """Regenerate PROMPT.md from the system prompt inside site/index.html, so the copyable prompt never drifts from the live one."""
-import re, pathlib
+import re, pathlib, sys
 root = pathlib.Path(__file__).resolve().parents[1]
 html = (root / "site/index.html").read_text()
-system = re.search(r"const SYSTEM = `(.*?)`;", html, re.S).group(1).strip()
-domains = re.findall(r'"([a-z0-9.\-]+\.[a-z]+(?:/[^"]*)?)"', re.search(r"const ALLOWED_DOMAINS = \[(.*?)\];", html, re.S).group(1))
+def grab(pat, what):
+    m = re.search(pat, html, re.S)
+    if not m: sys.exit(f"site/index.html: could not find {what} (declaration changed?)")
+    return m.group(1)
+system = grab(r"const SYSTEM = `(.*?)`;", "const SYSTEM").strip()
+domains = re.findall(r'"([a-z0-9.\-]+\.[a-z]+(?:/[^"]*)?)"', grab(r"const ALLOWED_DOMAINS = \[(.*?)\];", "const ALLOWED_DOMAINS"))
 SEARCH_SENTENCE = "You have web search restricted to trusted UK and academic medical sites. Use it on every question. Never answer from memory."
 SEARCH_REPLACEMENT = "Use web search on every question and read ONLY these sites: " + ", ".join(domains) + ". If a result is from any other site, ignore it. Never answer from memory."
 SOURCES_SENTENCE = "Do not write a sources or references section and do not paste URLs; the page builds the sources list from your citations."
@@ -42,5 +46,7 @@ Allowed sites (enforced with `allowed_domains` on Anthropic's web search tool): 
 ---
 *Generated from `site/index.html` by `bin/export-prompt.py` — edit the prompt there, then re-run it.*
 """
+if "--check" in sys.argv:  # exit 1 if PROMPT.md is stale; wire into CI or a pre-commit hook
+    sys.exit(0 if (root / "PROMPT.md").read_text() == out else "PROMPT.md is stale: run bin/export-prompt.py")
 (root / "PROMPT.md").write_text(out)
 print("PROMPT.md written:", len(out.split()), "words")
